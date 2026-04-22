@@ -10,6 +10,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -146,6 +147,7 @@ export default function App() {
   }
 
   function haltTracking() {
+    deactivateKeepAwake();
     if (timerInterval.current) {
       clearInterval(timerInterval.current);
       timerInterval.current = null;
@@ -165,6 +167,7 @@ export default function App() {
     lastCoords.current = null;
     startTime.current = Date.now();
     setTrackingStatus('running');
+    activateKeepAwakeAsync();
 
     timerInterval.current = setInterval(() => {
       setElapsed(Date.now() - startTime.current);
