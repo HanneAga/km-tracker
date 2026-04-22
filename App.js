@@ -5,11 +5,11 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   StatusBar,
   Animated,
   Dimensions,
 } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -164,8 +164,12 @@ export default function App() {
     }, 500);
 
     const sub = await Location.watchPositionAsync(
-      { accuracy: Location.Accuracy.BestForNavigation, timeInterval: 1000, distanceInterval: 1 },
-      ({ coords: { latitude, longitude } }) => {
+      { accuracy: Location.Accuracy.BestForNavigation, timeInterval: 1000, distanceInterval: 3 },
+      ({ coords: { latitude, longitude, accuracy, speed } }) => {
+        // Discard readings with poor GPS fix or no real movement
+        if (accuracy > 20) return;
+        if (speed !== null && speed < 0.3) return; // < ~1 km/h, standing still
+
         if (lastCoords.current) {
           const delta = haversineDistance(
             lastCoords.current.latitude,
@@ -193,11 +197,10 @@ export default function App() {
   }
 
   function stopEarly() {
-    const finalMs = Date.now() - (startTime.current || Date.now());
     haltTracking();
-    setElapsed(finalMs);
-    setTrackingStatus('done');
-    persistRun(finalMs);
+    setTrackingStatus('idle');
+    setDistance(0);
+    setElapsed(0);
   }
 
   function resetRun() {
@@ -215,6 +218,7 @@ export default function App() {
     : null;
 
   return (
+    <SafeAreaProvider>
     <SafeAreaView style={s.safe}>
       <StatusBar barStyle="light-content" backgroundColor="#0f0f1a" />
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
@@ -249,7 +253,7 @@ export default function App() {
             <Text style={s.statLabel}>{trackingStatus === 'done' ? 'Final Time' : 'Elapsed'}</Text>
             <Text style={s.statValue}>{formatDuration(elapsed)}</Text>
           </View>
-          <View style={s.statCard}>
+          <View style={[s.statCard, { marginRight: 0 }]}>
             <Text style={s.statLabel}>Remaining</Text>
             <Text style={s.statValue}>{remaining} km</Text>
           </View>
@@ -337,6 +341,7 @@ export default function App() {
         <View style={{ height: 48 }} />
       </ScrollView>
     </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
@@ -381,7 +386,7 @@ const s = StyleSheet.create({
   distPct: { fontSize: 13, color: '#6c63ff', marginTop: 4, fontWeight: '700' },
 
   // Stats row
-  statsRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
+  statsRow: { flexDirection: 'row', marginBottom: 16 },
   statCard: {
     flex: 1,
     backgroundColor: '#1a1a2e',
@@ -390,6 +395,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#2a2a40',
+    marginRight: 12,
   },
   statLabel: {
     fontSize: 10,
