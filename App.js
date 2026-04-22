@@ -129,6 +129,13 @@ export default function App() {
     } catch (_) {}
   }
 
+  async function clearHistory() {
+    setHistory([]);
+    try {
+      await AsyncStorage.removeItem(STORAGE_KEY);
+    } catch (_) {}
+  }
+
   async function persistRun(durationMs) {
     const run = { id: Date.now(), date: new Date().toISOString(), durationMs };
     const updated = [run, ...history];
@@ -338,6 +345,13 @@ export default function App() {
           </View>
         )}
 
+        {/* ── Clear history ── */}
+        {history.length > 0 && (
+          <TouchableOpacity style={s.clearBtn} onPress={clearHistory} activeOpacity={0.75}>
+            <Text style={s.clearBtnText}>Clear History</Text>
+          </TouchableOpacity>
+        )}
+
         <View style={{ height: 48 }} />
       </ScrollView>
     </SafeAreaView>
@@ -436,6 +450,18 @@ const s = StyleSheet.create({
   btnNew: { backgroundColor: '#00b4d8', shadowColor: '#00b4d8' },
   btnMuted: { backgroundColor: '#333355', shadowColor: 'transparent' },
   btnText: { color: '#fff', fontSize: 17, fontWeight: '700', letterSpacing: 0.4 },
+
+  // Clear history
+  clearBtn: {
+    alignSelf: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 50,
+    borderWidth: 1,
+    borderColor: '#ff4d4d44',
+    marginBottom: 8,
+  },
+  clearBtnText: { color: '#ff4d4d', fontSize: 14, fontWeight: '600' },
 
   // Section
   section: { marginBottom: 24 },
