@@ -1,6 +1,7 @@
 # KM Tracker
 
-A React Native app built with Expo that tracks how far you have walked or run, with a 1 km challenge mode.
+The app is a React Native Expo app that tracks how fast a user runs 1km and vibrates when
+they hit 1km. I built it to test my speed before running 1km at a work marathon event.
 
 ## Features
 
